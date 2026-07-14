@@ -1,0 +1,43 @@
+{
+  "template": "https://github.com/backofficedev/cookiecutter_chartbook",
+  "commit": "038010fa2e6d420f0697d433e31259593fea1e11",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "project_name": "p06_martin_2025",
+      "project_slug": "p06_martin_2025",
+      "project_description": "Replication and extension of Martin (2025) using OptionMetrics and CRSP data to construct the SVIX index, reproduce the paper's forecasting results, and evaluate the robustness of SVIX as a predictor of future equity returns.",
+      "author_name": "Chandler Bird, Andrew Heekin",
+      "author_email": "heekin@uchicago.edu chandler.ccc.bird@gmail.com",
+      "python_version": "3.12",
+      "environment_manager": "conda",
+      "include_latex_reports": true,
+      "include_jupyter_notebooks": true,
+      "include_r_scripts": true,
+      "include_stata_scripts": true,
+      "include_chartbook": true,
+      "include_github_actions": true,
+      "include_fred": true,
+      "include_fed_yield_curve": true,
+      "include_ofr_api": true,
+      "include_bloomberg": true,
+      "include_crsp_stock": true,
+      "include_crsp_compustat": true,
+      "_copy_without_render": [
+        "*.bst",
+        "*.sty",
+        "*.eps",
+        "*.ipe",
+        "*.png",
+        "*.pdf",
+        "*.tex",
+        "*.bib",
+        ".github/workflows/*.yml",
+        ".claude/skills/*/*.md"
+      ],
+      "_template": "https://github.com/backofficedev/cookiecutter_chartbook",
+      "_commit": "038010fa2e6d420f0697d433e31259593fea1e11"
+    }
+  },
+  "directory": null
+}
