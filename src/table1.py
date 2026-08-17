@@ -10,6 +10,7 @@ import statsmodels.api as sm
 
 from build_future_returns import load_future_returns
 from martin_spec import (
+    HORIZON_DAYS,
     HORIZONS,
     NW_LAGS,
     ORIGINAL_SAMPLE_END,
@@ -221,8 +222,17 @@ def updated_table(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def post_2022_table(df: pd.DataFrame) -> pd.DataFrame:
-    """Fresh post-paper sample beginning January 2023."""
-    return pd.DataFrame(
+    """Fresh post-paper sample beginning January 2023.
+
+    This sample is short relative to the horizons being forecast, so the
+    reported standard errors should not be read the way the full-sample ones
+    are. Two columns make that explicit: ``hac_lag_share`` is the Newey-West lag
+    length as a fraction of the sample, and ``independent_periods`` counts how
+    many non-overlapping horizon returns the window actually contains. When the
+    lag length approaches the sample size, or the window holds only one or two
+    independent periods, the slope is not identified in any useful sense.
+    """
+    result = pd.DataFrame(
         [
             run_regression(
                 df,
@@ -235,6 +245,16 @@ def post_2022_table(df: pd.DataFrame) -> pd.DataFrame:
             for h in HORIZONS
         ]
     )
+    horizon_days = result["horizon"].map(HORIZON_DAYS).astype(float)
+    span_days = (
+        pd.to_datetime(result["last_usable_date"]) - pd.Timestamp(POST_2022_START)
+    ).dt.days
+    result["hac_lag_share"] = result["nw_lags"] / result["nobs"].replace(0, np.nan)
+    result["independent_periods"] = (span_days / horizon_days).round(2)
+    result["inference_reliable"] = (
+        (result["hac_lag_share"] < 0.25) & (result["independent_periods"] >= 5)
+    )
+    return result
 
 
 if __name__ == "__main__":
