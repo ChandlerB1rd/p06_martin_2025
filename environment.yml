@@ -14,7 +14,7 @@ dependencies:
   - numpy==1.26.4
   - openpyxl==3.1.5
   - pandas-datareader==0.10.0
-  - pandas-market-calendars==4.4.1
+  - pandas-market-calendars
   - pandas==2.2.3
   - paramiko==3.5.0
   - plotly==5.24.1
