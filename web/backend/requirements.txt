@@ -1,0 +1,8 @@
+# Web-only dependencies for the SVIX Monitor API.
+# Kept separate from the root requirements.txt so the doit pipeline
+# environment is unchanged by the viewer.
+# Install with: pip install -r web/backend/requirements.txt
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic>=2.0.0
