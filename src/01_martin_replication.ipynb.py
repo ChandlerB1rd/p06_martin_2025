@@ -110,8 +110,10 @@ pd.read_csv(OUTPUT_DIR / "table1_post2022.csv")
 # ## 6. Martin (2025) Figures 1 and 2 — power utility
 
 # %%
-display(Image(filename=str(OUTPUT_DIR / "figure1_power_utility.png")))
-display(Image(filename=str(OUTPUT_DIR / "figure2_power_utility.png")))
+display(Image(filename=str(OUTPUT_DIR / "figure1_power_utility_replication.png")))
+display(Image(filename=str(OUTPUT_DIR / "figure2_power_utility_replication.png")))
+display(Image(filename=str(OUTPUT_DIR / "figure1_power_utility_updated.png")))
+display(Image(filename=str(OUTPUT_DIR / "figure2_power_utility_updated.png")))
 
 # %% [markdown]
 # ## 7. Project extensions

@@ -60,8 +60,15 @@ def compute_svix_for_expiration(
     }
 
 
-def build_svix_by_expiration() -> pd.DataFrame:
-    inputs = load_expiration_inputs()
+def build_svix_by_expiration(inputs: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Compute SVIX per date/expiration surface.
+
+    ``inputs`` defaults to the production expiration inputs. Passing an
+    alternative table allows the same construction to be re-run under a
+    different forward-price convention without duplicating this loop.
+    """
+    if inputs is None:
+        inputs = load_expiration_inputs()
     records = []
 
     for meta, options in iter_clean_options():

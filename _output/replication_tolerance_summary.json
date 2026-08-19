@@ -3,5 +3,8 @@
   "passed": 40,
   "failed": 0,
   "all_within_tolerance": true,
+  "max_tolerance_utilization": 0.9083,
+  "tightest_check": "12m 2012_2022 r2",
+  "checks_above_half_tolerance": 7,
   "note": "Failures are investigation flags; generated results are never replaced by published values."
 }

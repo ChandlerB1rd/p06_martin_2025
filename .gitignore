@@ -249,3 +249,6 @@ src/z_scratch_project_template.ipynb
 *Thumbs.db
 
 src/z_scratch_pipeline_template.ipynb
+
+# Notebooks generated from the paired .ipynb.py sources by jupytext.
+src/01_martin_replication.ipynb
