@@ -316,6 +316,7 @@ data_manual/     Small manually maintained files that may be version controlled
 docs_src/        Chartbook page definitions and project documentation
 reports/         LaTeX report and presentation source files
 src/             Data pulls, cleaning, SVIX construction, analysis, and tests
+web/             SVIX Monitor web app (FastAPI API + React UI) over the caches
 _data/           Raw and intermediate data generated locally; excluded from Git
 _output/         Generated tables, figures, notebooks, and Chartbook outputs
 dodo.py          PyDoit task definitions for the end-to-end pipeline
@@ -339,6 +340,27 @@ The intended end-to-end workflow is:
 8. Extend the required results through the latest available data.
 9. Run the planned robustness extensions.
 10. Generate Chartbook pages, tables, figures, notebooks, and the LaTeX report.
+
+## SVIX Monitor (Web App)
+
+`web/` holds an optional local dashboard that reads the pipeline outputs and
+presents the latest option-implied equity premium, its regime against the
+historical distribution, the full history, and the Table 1 regressions. It
+computes nothing new and never contacts WRDS, so it cannot diverge from the
+replication.
+
+Run the pipeline through `table1`, then start the two processes:
+
+```bash
+pip install -r web/backend/requirements.txt
+PYTHONPATH=web/backend uvicorn app.main:app --reload --port 8000
+
+# in a second terminal
+cd web/frontend && npm install && npm run dev
+```
+
+See [`web/README.md`](web/README.md) for the endpoint list, the data
+requirements, and the annualization convention.
 
 ## Quick Start
 

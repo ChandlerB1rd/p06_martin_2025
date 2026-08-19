@@ -22,6 +22,10 @@ temp*.csv
 */_build/
 drafts/draft_bp.pdf
 
+# Web app (SVIX Monitor) build artifacts
+web/frontend/node_modules/
+web/frontend/dist/
+
 # venv virtual environment folder
 /venv/*
 /.venv/*
@@ -152,6 +156,8 @@ target/
 # Exclude Output From Scripted Jobs
 ###################################
 *.o*
+# The rule above also matches this lint config, which we do want tracked.
+!web/frontend/.oxlintrc.json
 
 ####################################
 # Exclude Sublime Text project files
