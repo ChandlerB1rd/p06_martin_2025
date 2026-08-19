@@ -287,6 +287,87 @@ def task_regime_analysis():
     }
 
 
+def task_svix_deliverables():
+    """Summary statistics and the plotted SVIX series required by the brief."""
+    return {
+        "actions": [
+            "python ./src/svix_summary_stats.py",
+            "python ./src/plot_svix_series.py",
+        ],
+        "targets": [
+            OUTPUT_DIR / "svix_summary_stats.csv",
+            OUTPUT_DIR / "svix_series.png",
+        ],
+        "file_dep": [
+            "./src/svix_summary_stats.py",
+            "./src/plot_svix_series.py",
+            "./src/martin_spec.py",
+            DATA_DIR / "svix_daily.parquet",
+        ],
+        "task_dep": ["svix"],
+        "clean": True,
+    }
+
+
+def task_crisis_window_analysis():
+    """Quantify how far the published-sample slopes rest on 2008-2009."""
+    return {
+        "actions": ["python ./src/crisis_window_analysis.py"],
+        "targets": [
+            OUTPUT_DIR / "crisis_window_analysis.csv",
+            OUTPUT_DIR / "crisis_leave_one_year_out.csv",
+            OUTPUT_DIR / "crisis_leave_one_year_out.png",
+        ],
+        "file_dep": [
+            "./src/crisis_window_analysis.py",
+            "./src/table1.py",
+            DATA_DIR / "svix_daily.parquet",
+            DATA_DIR / "future_sp500_returns.parquet",
+        ],
+        "task_dep": ["table1"],
+        "clean": True,
+    }
+
+
+def task_pull_optionmetrics_forwards():
+    """Pull the OptionMetrics forward-price file used by the robustness check."""
+    return {
+        "actions": ["python ./src/pull_optionmetrics_forwards.py"],
+        "targets": [DATA_DIR / "optionmetrics_spx_forwards_raw.parquet"],
+        "file_dep": [
+            "./src/settings.py",
+            "./src/wrds_helpers.py",
+            "./src/pull_optionmetrics.py",
+            "./src/pull_optionmetrics_forwards.py",
+        ],
+        "clean": True,
+    }
+
+
+def task_forward_robustness():
+    """Re-estimate Table 1 under the OptionMetrics forward convention."""
+    return {
+        "actions": ["python ./src/forward_robustness.py"],
+        "targets": [
+            DATA_DIR / "svix_daily_om_forward.parquet",
+            OUTPUT_DIR / "forward_price_discrepancy.csv",
+            OUTPUT_DIR / "forward_robustness_table1.csv",
+            OUTPUT_DIR / "forward_robustness.png",
+        ],
+        "file_dep": [
+            "./src/forward_robustness.py",
+            "./src/svix.py",
+            "./src/table1.py",
+            DATA_DIR / "optionmetrics_spx_forwards_raw.parquet",
+            DATA_DIR / "option_expiration_inputs.parquet",
+            DATA_DIR / "svix_daily.parquet",
+            DATA_DIR / "future_sp500_returns.parquet",
+        ],
+        "task_dep": ["table1", "pull_optionmetrics_forwards"],
+        "clean": True,
+    }
+
+
 notebook_tasks = {
     "01_martin_replication.ipynb.py": {
         "path": "./src/01_martin_replication.ipynb.py",

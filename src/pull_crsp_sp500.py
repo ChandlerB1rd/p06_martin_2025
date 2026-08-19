@@ -22,7 +22,8 @@ END_DATE = os.getenv(
 OUT = DATA_DIR / "crsp_sp500_daily_raw.parquet"
 
 
-def find_crsp_sp500_table(db) -> tuple[str, str]:
+def _sp500_candidates(db) -> list[tuple[str, str]]:
+    """Return (table, date column) pairs that can supply S&P 500 total returns."""
     sql = """
         SELECT lower(table_name) AS table_name,
                lower(column_name) AS column_name
@@ -35,21 +36,56 @@ def find_crsp_sp500_table(db) -> tuple[str, str]:
     if cols.empty:
         raise RuntimeError("Could not inspect CRSP index columns.")
     grouped = cols.groupby("table_name")["column_name"].agg(set)
+
     # Table 1 requires S&P 500 total returns. Restrict discovery to the
-    # dedicated S&P 500 index file rather than the broad CRSP market-index
+    # dedicated S&P 500 index files rather than the broad CRSP market-index
     # file, because VWRETD has a different universe in DSI.
-    preferred = ("dsp500", "dsp500_v2")
-    candidates = list(preferred) + [t for t in grouped.index if t not in preferred]
-    for table in candidates:
-        if table not in grouped.index or "vwretd" not in grouped.loc[table]:
+    candidates = []
+    for table in sorted(grouped.index):
+        if not table.startswith("dsp500"):
             continue
         columns = grouped.loc[table]
+        if "vwretd" not in columns:
+            continue
         for date_col in ("caldt", "dlycaldt", "indexdate", "date"):
             if date_col in columns:
-                return table, date_col
-    raise RuntimeError(
-        "Could not locate CRSP DSP500 with VWRETD and a date field."
-    )
+                candidates.append((table, date_col))
+                break
+    return candidates
+
+
+def find_crsp_sp500_table(db) -> tuple[str, str]:
+    """Select the S&P 500 index file with the most recent coverage.
+
+    CRSP froze the legacy ``dsp500`` file when it migrated to the ``_v2`` index
+    files, so name-ordered discovery silently returns a series that ends in
+    December 2024. Table 1's dependent variable is a realized forward return, so
+    a stale return file truncates the update sample by a year and materially
+    changes the post-2022 slopes. Choosing on observed coverage rather than on a
+    hardcoded name order keeps this correct across future CRSP migrations.
+    """
+    candidates = _sp500_candidates(db)
+    if not candidates:
+        raise RuntimeError("Could not locate CRSP DSP500 with VWRETD and a date field.")
+
+    coverage = []
+    for table, date_col in candidates:
+        probe = db.raw_sql(
+            f"SELECT max({date_col}) AS last_date FROM {CRSP_LIBRARY}.{table}"
+        )
+        last_date = pd.to_datetime(probe["last_date"].iloc[0], errors="coerce")
+        if pd.isna(last_date):
+            continue
+        coverage.append((last_date, table, date_col))
+
+    if not coverage:
+        raise RuntimeError("No CRSP S&P 500 candidate table returned a usable date range.")
+
+    coverage.sort(reverse=True)
+    for last_date, table, _ in coverage:
+        print(f"CRSP candidate {CRSP_LIBRARY}.{table}: last observation {last_date.date()}")
+    _, best_table, best_date_col = coverage[0]
+    return best_table, best_date_col
 
 
 def pull_crsp_sp500(db) -> pd.DataFrame:

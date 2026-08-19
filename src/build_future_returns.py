@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 import numpy as np
@@ -15,6 +16,42 @@ from settings import config
 
 DATA_DIR = Path(config("DATA_DIR"))
 OUT = DATA_DIR / "future_sp500_returns.parquet"
+
+# CRSP publishes on a slower cadence than OptionMetrics, so a modest lag is
+# normal. A gap beyond this many days indicates a stale source table rather than
+# a publication lag, which would silently truncate the update sample.
+MAX_RETURN_LAG_DAYS = int(os.getenv("P06_MAX_RETURN_LAG_DAYS", "180"))
+
+
+def check_return_coverage(
+    crsp: pd.DataFrame,
+    zero_curve: pd.DataFrame,
+    max_lag_days: int = MAX_RETURN_LAG_DAYS,
+) -> int:
+    """Fail when the return series ends far behind the option-derived series.
+
+    Table 1's dependent variable is a realized forward return, so the update
+    sample can only run as far as CRSP does. A stale return file therefore
+    truncates the sample without any visible error, and at the 6- and 12-month
+    horizons that truncation is large enough to change the sign of the slope.
+    """
+    crsp_end = pd.to_datetime(crsp["date"]).max()
+    option_end = pd.to_datetime(zero_curve["date"]).max()
+    lag_days = int((option_end - crsp_end).days)
+
+    print(
+        f"Return coverage: CRSP to {crsp_end.date()}, option data to "
+        f"{option_end.date()} ({lag_days} day gap)"
+    )
+    if lag_days > max_lag_days:
+        raise RuntimeError(
+            f"CRSP returns end {lag_days} days before the option data "
+            f"({crsp_end.date()} vs {option_end.date()}), which exceeds the "
+            f"{max_lag_days}-day tolerance. This usually means a frozen CRSP "
+            "index file was selected; see find_crsp_sp500_table. Set "
+            "P06_MAX_RETURN_LAG_DAYS to override."
+        )
+    return lag_days
 
 
 def future_return_to_day_target(
@@ -54,6 +91,7 @@ def build_future_returns(
     zero_curve: pd.DataFrame,
 ) -> pd.DataFrame:
     """Build period-total and paper-style annualized return targets."""
+    check_return_coverage(crsp, zero_curve)
     out = crsp.sort_values("date").reset_index(drop=True).copy()
     curves = {pd.Timestamp(dt): g for dt, g in zero_curve.groupby("date", sort=False)}
 
