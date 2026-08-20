@@ -1,13 +1,8 @@
-"""Plot the fixed-horizon SVIX series as a pipeline figure.
+"""Plot the fixed-horizon SVIX series as report-ready pipeline figures.
 
-The project brief asks for the SVIX index to be plotted and compared against
-Martin (2017). The notebook already shows the term structure interactively; this
-module writes a reviewable figure target so the deliverable does not depend on
-executing a notebook.
-
-The left panel shows the full sample. The right panel repeats the series over the
-Martin (2017) window, which ends in January 2012, so the levels and the shape of
-the 2008 spike can be checked against the published figure directly.
+The first output compares the full sample with the Martin (2017) validation
+window through January 2012. The second output shows the four fixed-horizon
+SVIX series over the full sample in the same units used by the analysis.
 """
 
 from __future__ import annotations
@@ -26,13 +21,20 @@ from settings import config
 from svix import load_svix_daily
 
 OUTPUT_DIR = Path(config("OUTPUT_DIR"))
-OUT = OUTPUT_DIR / "svix_series.png"
+SERIES_OUT = OUTPUT_DIR / "svix_series.png"
+TERM_STRUCTURE_OUT = OUTPUT_DIR / "svix_term_structure.png"
 
 MARTIN_2017_END = "2012-01-31"
-HORIZON_LABELS = {"1m": "1 month", "3m": "3 months", "6m": "6 months", "12m": "12 months"}
+HORIZON_LABELS = {
+    "1m": "1 month",
+    "3m": "3 months",
+    "6m": "6 months",
+    "12m": "12 months",
+}
 
 
 def _draw_panel(ax, frame: pd.DataFrame, title: str) -> None:
+    """Draw one SVIX comparison panel in percentage units."""
     for horizon in HORIZONS:
         column = f"svix_{horizon}"
         if column not in frame.columns:
@@ -51,6 +53,7 @@ def _draw_panel(ax, frame: pd.DataFrame, title: str) -> None:
 
 
 def plot_svix_series(svix: pd.DataFrame) -> plt.Figure:
+    """Plot the full sample beside the Martin (2017) validation window."""
     df = svix.copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date")
@@ -58,19 +61,53 @@ def plot_svix_series(svix: pd.DataFrame) -> plt.Figure:
 
     fig, axes = plt.subplots(1, 2, figsize=(13, 4.5))
     _draw_panel(axes[0], df, "(a) Full sample")
-    _draw_panel(axes[1], early, "(b) Martin (2017) window, through January 2012")
+    _draw_panel(
+        axes[1],
+        early,
+        "(b) Martin (2017) window, through January 2012",
+    )
     fig.suptitle("SVIX index at fixed horizons (Martin 2025)")
     fig.tight_layout()
     return fig
 
 
-def main() -> Path:
-    fig = plot_svix_series(load_svix_daily())
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT, dpi=200)
-    plt.close(fig)
-    print(f"Saved SVIX series figure -> {OUT}")
-    return OUT
+def plot_svix_term_structure(svix: pd.DataFrame) -> plt.Figure:
+    """Plot all fixed-horizon SVIX series over the full sample."""
+    df = svix.copy()
+    df["date"] = pd.to_datetime(df["date"])
+    df = df.sort_values("date")
+
+    fig, ax = plt.subplots(figsize=(11, 5))
+    for horizon in HORIZONS:
+        column = f"svix_{horizon}"
+        if column not in df.columns:
+            continue
+        ax.plot(df["date"], df[column], label=column)
+
+    ax.set_title("SVIX fixed-horizon term structure")
+    ax.set_xlabel("date")
+    ax.set_ylabel("Annualized SVIX")
+    ax.legend()
+    fig.tight_layout()
+    return fig
+
+
+def main() -> tuple[Path, Path]:
+    """Generate both report-ready SVIX figures from the cleaned daily series."""
+    svix = load_svix_daily()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    series_fig = plot_svix_series(svix)
+    series_fig.savefig(SERIES_OUT, dpi=200)
+    plt.close(series_fig)
+
+    term_fig = plot_svix_term_structure(svix)
+    term_fig.savefig(TERM_STRUCTURE_OUT, dpi=200)
+    plt.close(term_fig)
+
+    print(f"Saved SVIX series figure -> {SERIES_OUT}")
+    print(f"Saved SVIX term-structure figure -> {TERM_STRUCTURE_OUT}")
+    return SERIES_OUT, TERM_STRUCTURE_OUT
 
 
 if __name__ == "__main__":

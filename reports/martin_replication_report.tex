@@ -1,0 +1,209 @@
+\documentclass[11pt]{article}
+
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{adjustbox}
+\usepackage{caption}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+
+\graphicspath{{../_output/}}
+
+\title{Replication and Extension of Martin (2025):\\
+\textit{Information in Derivatives Markets: Forecasting Prices with Prices}}
+\author{Chandler Bird and Andrew Heekin}
+\date{}
+
+\newcommand{\autotable}[3]{%
+\begin{table}[H]
+\centering
+\caption{#2}
+\label{#3}
+\begin{adjustbox}{max width=\textwidth}
+\input{../_output/latex_tables/#1}
+\end{adjustbox}
+\end{table}
+}
+
+\newcommand{\projectfigure}[3]{%
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.94\textwidth]{#1}
+\caption{#2}
+\label{#3}
+\end{figure}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This project replicates and extends the empirical analysis in Martin (2025), which uses S\&P 500 option prices to construct SVIX and study the relationship between option-implied risk and future equity returns. Using OptionMetrics IvyDB US and CRSP data accessed through WRDS, we construct daily SVIX at the 1-, 3-, 6-, and 12-month horizons, reproduce the paper's main forecasting regressions and power-utility figures, and extend the analysis through the latest available 2025 data. We then examine time variation, forecast horizons, market regimes, crisis sensitivity, and the forward-price convention used in SVIX construction. The replication is close to the published results, while the extensions show that the predictive relationship is strongly horizon- and state-dependent.
+\end{abstract}
+
+\section{Project Overview}
+
+Martin (2025) shows that option prices contain information about expected future equity returns. The central object in our replication is SVIX, an option-implied measure built from out-of-the-money S\&P 500 puts and calls. Our first objective was to reproduce the paper's published results as closely as possible using an independent implementation. Once the replication was validated, we extended the sample and asked whether the forecasting relationship remained stable across time, horizons, and market conditions.
+
+The project is organized as a reproducible pipeline. Licensed raw data are pulled from WRDS, cleaned into tidy intermediate datasets, transformed into option surfaces and fixed-horizon SVIX measures, joined to future S\&P 500 total returns, and then passed to the replication and extension modules. The numerical tables in this report are generated directly from pipeline CSV outputs by \texttt{src/build\_latex\_tables.py}; no regression statistics are manually entered into the report.
+
+\section{Data}
+
+\subsection{OptionMetrics IvyDB US}
+
+We use S\&P 500 index options from OptionMetrics IvyDB US with \texttt{secid = 108105}. The fields required for the analysis include observation date, expiration date, strike price, put/call indicator, bid and ask prices, the underlying index level, and contract metadata used for quality control. These data are cleaned before the option surfaces used in the SVIX integral are formed.
+
+\subsection{OptionMetrics Zero-Coupon Curve}
+
+The OptionMetrics zero-coupon curve is used for maturity-matched discounting and risk-free returns. Each option expiration is matched to the appropriate point on the curve before the forward price and SVIX integral are constructed.
+
+\subsection{CRSP S\&P 500 Total Returns}
+
+CRSP provides the daily S\&P 500 total-return series used to construct realized future market returns. The cleaned return series is compounded into 1-, 3-, 6-, and 12-month future returns and then converted to excess returns using horizon-matched risk-free returns. Because long-horizon forecasts require future realized outcomes, the latest usable regression date is earlier for the 6- and 12-month specifications than for the 1- and 3-month specifications.
+
+\section{Methodology}
+
+The raw option, rate, and return data are cleaned in dedicated modules before analysis. This keeps the tidy-data layer separate from the research layer. The option cleaning removes invalid observations, crossed markets, duplicate or inconsistent contracts, and unusable quotes while preserving diagnostics on data coverage and option-surface quality.
+
+For each date and expiration, the pipeline combines the cleaned option surface with the maturity-matched zero-coupon curve and estimates the forward price used to separate out-of-the-money puts from calls. SVIX is then computed by numerically integrating those option prices across strikes following Equation (19) in Martin (2025). Expiration-level values are interpolated to fixed 1-, 3-, 6-, and 12-month horizons.
+
+The main forecasting regression relates future S\&P 500 excess returns to contemporaneous SVIX. Following the paper, we use Newey--West standard errors for overlapping future returns, with 21, 65, 130, and 260 lags for the 1-, 3-, 6-, and 12-month horizons.
+
+\section{Replication Results}
+
+\autotable{table1_replication.tex}
+{Replication of Martin's forecasting regressions over the original 1996--2022 sample. The replicated coefficients and fit statistics are close to the published results across horizons, which provides the main validation for the independent SVIX implementation.}
+{tab:replication}
+
+\autotable{table1_published_comparison.tex}
+{Direct comparison of replicated and published Table 1 values. The 6-month slope is particularly close to the paper, while the remaining differences fall within the documented project tolerances used by the automated replication tests.}
+{tab:published-comparison}
+
+\projectfigure{figure1_power_utility_replication.png}
+{Replication of Martin's one-month power-utility equity-premium figure for risk aversion $\gamma=1,2,3$. The option-implied premium rises sharply during periods of market stress, and the effect becomes larger as risk aversion increases.}
+{fig:power1-rep}
+
+\projectfigure{figure2_power_utility_replication.png}
+{Replication of Martin's one-year power-utility equity-premium figure. The longer horizon is smoother than the one-month series, but elevated option-implied risk is still associated with larger required equity premia.}
+{fig:power2-rep}
+
+The replication was successful overall. The historical SVIX series reproduces the expected behavior around major market events, and the core Table 1 estimates are close enough to the published values to pass the project's tolerance tests. This was important because the later extensions are only meaningful if they are built on a credible replication of the paper.
+
+\section{Updated Results Through 2025}
+
+\autotable{table1_updated.tex}
+{Forecasting regressions using the full updated sample through the latest usable 2025 observation for each horizon. Longer horizons end earlier because a realized future return must be observed after the forecast date.}
+{tab:updated}
+
+\autotable{table1_post2022.tex}
+{Post-2022 forecasting regressions. The estimated slopes remain positive at all four horizons and are particularly strong at 1 and 3 months. The 12-month estimate should be interpreted cautiously because the short updated sample contains only about two independent annual periods after accounting for overlap.}
+{tab:post2022}
+
+\projectfigure{figure1_power_utility_updated.png}
+{Updated one-month power-utility equity-premium series through the latest available data. The extension preserves the broad historical behavior of the replicated series while adding the post-2022 market environment.}
+{fig:power1-updated}
+
+\projectfigure{figure2_power_utility_updated.png}
+{Updated one-year power-utility equity-premium series. The longer horizon remains smoother than the front end of the curve and provides a useful view of how option-implied required compensation evolved beyond the paper's original sample.}
+{fig:power2-updated}
+
+The updated sample does not suggest that the SVIX-return relationship disappeared after the paper's endpoint. The post-2022 slopes are positive at every horizon, with especially strong fit at 1 and 3 months. At the same time, the short length of the post-2022 period makes long-horizon inference less reliable than the raw number of overlapping daily observations might suggest.
+
+\section{Summary Statistics and Data Characteristics}
+
+\autotable{svix_summary_stats.tex}
+{Summary statistics for the fixed-horizon SVIX series. Average annualized SVIX is similar across maturities, but short-horizon crisis peaks are much larger. This highlights the greater sensitivity of near-term option prices to sudden changes in perceived market risk.}
+{tab:svix-summary}
+
+\projectfigure{svix_series.png}
+{Daily annualized SVIX across the four fixed horizons. The series share a common market-risk component, but the front end reacts most sharply during major stress episodes such as the Global Financial Crisis and COVID-19.}
+{fig:svix-series}
+
+\projectfigure{svix_term_structure.png}
+{SVIX term structure over the full sample. Short maturities are more volatile and can spike far above longer maturities during crises, while the longer end of the curve is smoother.}
+{fig:svix-term}
+
+\section{Empirical Extensions}
+
+\subsection{Forecast-Horizon Comparison}
+
+\autotable{horizon_comparison.tex}
+{Comparison of forecasting performance across horizons. The 6-month specification produces the strongest out-of-sample performance, while the 1- and 3-month specifications have negative out-of-sample $R^2$. This suggests that SVIX is more useful as a medium-term expected-return signal than as a very short-term trading signal.}
+{tab:horizon}
+
+\projectfigure{horizon_comparison.png}
+{In-sample and out-of-sample forecasting performance by horizon. The 6-month horizon is the strongest out of sample, with the 12-month horizon also remaining positive.}
+{fig:horizon}
+
+\subsection{Rolling Predictive Power}
+
+\projectfigure{rolling_predictive_beta.png}
+{Five-year rolling SVIX forecasting slopes. The coefficient changes materially through time, including large shifts around major market episodes. A single full-sample coefficient therefore masks substantial variation in the strength of the relationship.}
+{fig:rolling}
+
+\subsection{Market-Regime Analysis}
+
+\autotable{regime_analysis.tex}
+{Forecasting regressions split by market regime. The strongest state dependence appears at the 6- and 12-month horizons, where high-volatility and high-SVIX states have much larger slopes and explanatory power than calm states.}
+{tab:regime}
+
+\projectfigure{regime_beta_comparison.png}
+{SVIX forecasting slopes across market-direction, realized-volatility, and SVIX regimes. The relationship is substantially stronger in high-risk environments, especially at medium and long horizons.}
+{fig:regime}
+
+\subsection{Crisis Robustness}
+
+\autotable{crisis_window_analysis.tex}
+{Full-sample regressions compared with estimates that exclude the main 2008--2009 crisis window. Removing the crisis does not eliminate the relationship; at the shortest horizons the estimated slope actually increases.}
+{tab:crisis-window}
+
+\projectfigure{crisis_leave_one_year_out.png}
+{Leave-one-year-out sensitivity of the 1996--2022 forecasting slope. Years such as 2008, 2009, and 2020 have meaningful leverage on the estimates, but no single crisis year is sufficient to explain the overall positive relationship.}
+{fig:crisis-loo}
+
+\subsection{Forward-Price Robustness}
+
+\autotable{forward_price_discrepancy.tex}
+{Difference between the baseline forward-price construction and the OptionMetrics-provided forward across maturity buckets. The discrepancy increases with maturity but remains modest relative to the option-price variation used in SVIX.}
+{tab:forward-discrepancy}
+
+\autotable{forward_robustness_table1.tex}
+{Table 1 coefficients under the baseline and alternative forward-price conventions. The slopes are effectively unchanged, showing that the main replication results are not driven by the forward-price convention.}
+{tab:forward-robustness}
+
+\projectfigure{forward_robustness.png}
+{Visual comparison of the forecasting results under the two forward-price conventions. The near overlap confirms that forward construction is not an economically important source of the replication differences.}
+{fig:forward}
+
+\section{Challenges and Lessons}
+
+Several implementation issues mattered materially during the project.
+
+First, historical OptionMetrics records required careful treatment of option-surface identifiers. Including contract metadata that varied across otherwise comparable options could fragment calls and puts from the same economic surface. Correcting the surface construction restored the expected historical SVIX behavior, including the large 2008 crisis spike.
+
+Second, the CRSP pull required explicit attention to coverage and to the use of the S\&P 500 total-return series. An older CRSP table stopped before the latest OptionMetrics observations. The final pipeline selects the available S\&P 500 return source by observed coverage and includes a guard against silently running updated regressions with stale realized-return data.
+
+Third, overlapping long-horizon returns make the number of daily regression rows look much larger than the amount of independent time-series information. This is especially important for the post-2022 12-month regression. We therefore distinguish between an economically large point estimate and the reliability of its inference.
+
+Finally, we tested whether the forward-price convention could explain remaining replication differences. It did not: using the OptionMetrics forward instead of the baseline construction changes the forecasting slopes by economically negligible amounts.
+
+\section{Conclusion}
+
+The project successfully reproduces the main empirical message of Martin (2025): S\&P 500 option prices contain information about future expected equity returns. The replication matches the paper closely enough to support the use of the same pipeline for updated and robustness analyses.
+
+The extensions add three main insights. First, the relationship persists beyond 2022, although long-horizon post-2022 inference is limited by the short independent sample. Second, predictive performance is horizon-dependent: the 6-month horizon performs best out of sample, while the shortest horizons are weaker. Third, the relationship is strongly state-dependent, with much more explanatory power in high-volatility and high-SVIX environments than in calm markets. Rolling, crisis, and forward-price robustness checks further show that the coefficient varies through time but is not simply an artifact of one crisis episode or one implementation choice.
+
+Taken together, the evidence suggests that SVIX is best interpreted as a time-varying, option-implied measure of required compensation for market risk rather than as a uniformly strong short-term trading signal.
+
+\begin{thebibliography}{9}
+\bibitem{martin2025}
+Ian W. R. Martin.
+\newblock Information in Derivatives Markets: Forecasting Prices with Prices.
+\newblock \textit{Annual Review of Financial Economics}, 17:295--319, 2025.
+\end{thebibliography}
+
+\end{document}
