@@ -2,377 +2,263 @@
 
 ## About This Project
 
-This project replicates and extends the empirical analysis in:
+This project replicates and extends the empirical analysis in Ian W. R. Martin's 2025 paper, *Information in Derivatives Markets: Forecasting Prices with Prices*.
 
-> Martin, Ian W. R. (2025). *Information in Derivatives Markets: Forecasting Prices with Prices*.  
-> *Annual Review of Financial Economics*, 17, 295–319.
+Using OptionMetrics IvyDB US and CRSP data accessed through WRDS, the project constructs daily SVIX measures for the S&P 500 at 1-, 3-, 6-, and 12-month horizons, replicates Martin's main forecasting results and power-utility figures, and extends the analysis through the latest available 2025 data.
 
-Using OptionMetrics IvyDB US and CRSP data from WRDS, we will construct the daily SVIX index from S&P 500 index options, reproduce the paper's main forecasting results, and extend the analysis through the most recent available data.
-
-The required replication includes SVIX at the 1-, 3-, 6-, and 12-month horizons, Table 1, and Figures 1 and 2.
-
-## Why This Project Is Useful
-
-Constructing SVIX requires several nontrivial steps: cleaning a large option panel, matching interest rates and maturities, estimating forward prices, integrating option prices across strikes, and joining the resulting forecasts to future S&P 500 returns.
-
-This repository is intended to provide a reproducible pipeline that allows a WRDS-authorized user to:
-
-- pull the required OptionMetrics and CRSP data;
-- construct an updated SVIX term structure;
-- reproduce Martin's published tables and figures;
-- evaluate the stability and usefulness of SVIX as a forecasting signal; and
-- adapt the code to different dates, horizons, and market-condition definitions.
-
-Raw licensed WRDS data will not be committed to GitHub. The repository will contain the code, configuration examples, documentation, tests, and generated research outputs needed to recreate the analysis.
+The project is organized as a reproducible research pipeline. Raw licensed data are pulled from WRDS, cleaned into tidy intermediate datasets, transformed into option surfaces and fixed-horizon SVIX measures, joined to future S&P 500 total returns, and passed through the replication, extension, notebook, and report stages.
 
 ## Research Question
 
-Our central extension asks:
+The main extension asks:
 
 > **How robust is SVIX as a forecasting signal for future S&P 500 excess returns?**
 
-Subject to instructor feedback, we will study robustness along three dimensions:
+We study this along four dimensions:
 
-1. **Time:** Has the predictive relationship remained stable through the sample?
-2. **Horizon:** Which of the 1-, 3-, 6-, and 12-month horizons provides the strongest forecasting performance?
-3. **Market conditions:** Does SVIX perform differently in calm, volatile, rising, or falling markets?
+1. **Time:** Does the forecasting relationship remain stable through the sample?
+2. **Horizon:** Which of the 1-, 3-, 6-, and 12-month horizons performs best?
+3. **Market conditions:** Is SVIX more informative in calm or stressed markets?
+4. **Specification robustness:** Are the results sensitive to crisis observations or the forward-price convention used in SVIX construction?
 
-## Required Replication
+## Key Findings
 
-We will complete the following assigned tasks:
+The replication closely matches Martin's published return-predictability results through December 2022.
 
-- Construct daily SVIX at:
-  - 1 month;
-  - 3 months;
-  - 6 months; and
-  - 12 months.
-- Replicate Martin's Table 1 forecasting regressions.
-- Replicate Martin's Figures 1 and 2 for power-utility investors with risk aversion \(\gamma = 1, 2, 3\).
-- Match the paper's original sample definitions as closely as the available data and methodology allow.
-- Extend the SVIX series, tables, and figures from December 2022 through the most recent available WRDS data.
-- Compare replicated results with the published values using documented tolerances and unit tests.
+For the original 1996–2022 sample:
 
-## Planned Project Extension
+| Horizon | Replicated Beta | Published Beta | Replicated R² | Published R² |
+|---|---:|---:|---:|---:|
+| 1 month | 1.425 | 1.569 | 1.13% | 1.30% |
+| 3 months | 1.382 | 1.439 | 2.11% | 2.20% |
+| 6 months | 2.432 | 2.418 | 7.04% | 6.84% |
+| 12 months | 2.026 | 1.858 | 5.66% | 4.73% |
 
-Updating the paper through the present is already part of the assigned replication. Our additional contribution is to examine whether SVIX is a stable and practically useful return-forecasting signal.
+Extending the sample beyond 2022 shows that the SVIX-return relationship remains positive at all four horizons. In the January 2023 through latest usable subsample:
 
-The following analyses are planned and remain subject to instructor feedback during the consultation.
+| Horizon | Beta | Newey–West t-stat | R² |
+|---|---:|---:|---:|
+| 1 month | 8.655 | 3.56 | 11.15% |
+| 3 months | 9.903 | 4.70 | 22.75% |
+| 6 months | 6.151 | 1.89 | 14.68% |
+| 12 months | 6.221 | 3.39 | 20.23% |
 
-### 1. Rolling Predictive Power
+The 12-month post-2022 result should be interpreted cautiously because the short updated sample contains only about two independent annual periods after accounting for overlapping returns.
 
-We will estimate fixed-window rolling versions of the forecasting regression to study how the relationship between SVIX and future excess returns changes through time.
+The horizon comparison shows that the strongest in-sample relationship does not always translate into short-horizon out-of-sample forecasting performance. The 6-month horizon has the strongest out-of-sample R² at approximately 6.3%, the 12-month horizon remains positive at approximately 2.8%, and the 1- and 3-month horizons are negative out of sample.
 
-Potential outputs include:
+The regime analysis shows that predictive power is materially stronger at the 6- and 12-month horizons during high-volatility and high-SVIX states than during calm markets. Rolling regressions also show that the forecasting coefficient changes substantially through time.
 
-- rolling slope coefficients;
-- rolling \(R^2\);
-- rolling Newey–West t-statistics; and
-- confidence intervals around the rolling slope estimates.
-
-### 2. Forecast-Horizon Comparison
-
-We will compare forecasting performance across the 1-, 3-, 6-, and 12-month horizons.
-
-Potential metrics include:
-
-- in-sample \(R^2\);
-- out-of-sample \(R^2\);
-- root mean squared error;
-- mean absolute error;
-- forecast bias; and
-- correlation between SVIX-implied premia and realized future excess returns.
-
-This analysis will identify whether the predictive content of option prices is concentrated at shorter or longer horizons.
-
-### 3. Market-Regime Analysis
-
-We will test whether SVIX performs differently across market environments using variables constructed from the project's OptionMetrics and CRSP data.
-
-Potential regime definitions include:
-
-- positive versus negative trailing market returns;
-- high versus low realized volatility from CRSP returns; and
-- high versus low SVIX environments.
-
-The final regime definitions, thresholds, and estimation approach will be documented and selected to avoid look-ahead bias.
+Crisis-window and forward-price robustness checks support the same conclusion. Removing the 2008–2009 crisis window does not eliminate the relationship, and replacing the baseline forward-price construction with the OptionMetrics forward leaves the Table 1 coefficients essentially unchanged.
 
 ## Data Sources
 
-All licensed data are accessed through WRDS.
+All licensed market data are accessed through WRDS.
 
 ### OptionMetrics IvyDB US
 
-S&P 500 index option data for `secid = 108105`, including fields needed to identify and value each contract:
+S&P 500 index option data for `secid = 108105`, including:
 
 - observation date;
 - expiration date;
 - strike price;
 - put/call indicator;
-- bid price;
-- ask price;
-- option midpoint or settlement-related fields when appropriate;
+- bid and ask prices;
 - underlying S&P 500 index level; and
 - contract identifiers and data-quality fields.
 
 ### OptionMetrics Zero-Coupon Yield Curve
 
-The zero-coupon curve will be used to construct maturity-matched discount factors and gross risk-free returns.
-
-Required fields include:
-
-- curve date;
-- maturity;
-- zero-coupon rate; and
-- discount factor, when directly available.
+Used to construct maturity-matched discount factors and gross risk-free returns.
 
 ### CRSP
 
-CRSP will provide the daily S&P 500 total-return series required to construct realized future market returns.
+Used for the daily S&P 500 total-return series and the construction of horizon-matched future excess returns.
 
-From the CRSP series, we will derive:
+Raw licensed OptionMetrics and CRSP data are intentionally excluded from GitHub.
 
-- cumulative 1-, 3-, 6-, and 12-month future total returns;
-- horizon-matched realized excess returns; and
-- trailing returns and realized-volatility measures used in the regime analysis.
+## Methodology
 
-## Methodology Overview
+### Data Cleaning
 
-### Option Cleaning
+Data cleaning is separated from analysis code. The pipeline removes invalid or crossed option quotes, constructs midpoint prices, checks contract metadata, validates expirations and strikes, and preserves diagnostics on data coverage and option surfaces.
 
-The option-cleaning procedure will be documented explicitly and may include:
+### Forward Prices and SVIX
 
-- removing missing or invalid quotes;
-- removing crossed markets;
-- constructing bid-ask midpoint prices;
-- handling zero bids and extremely wide spreads;
-- removing duplicate contracts;
-- verifying strike and expiration consistency;
-- retaining the appropriate out-of-the-money puts and calls; and
-- recording data-coverage and option-count diagnostics.
+For each date and expiration, the cleaned option surface is matched to the zero-coupon curve and a forward price is constructed. The forward determines the out-of-the-money put/call boundary used in the SVIX integral.
 
-### Forward Prices and Maturities
-
-For each date and expiration, we will:
-
-- match the zero-coupon curve to the option maturity;
-- estimate the forward price using the methodology agreed upon during the instructor consultation;
-- separate out-of-the-money puts and calls at the forward boundary; and
-- interpolate between available expirations to obtain fixed 1-, 3-, 6-, and 12-month horizons.
-
-### SVIX Construction
-
-We will implement Equation (19) from Martin (2025), numerically integrating out-of-the-money put and call prices across strikes.
-
-The code will separately retain:
-
-- the put contribution;
-- the call contribution;
-- the total option-price integral;
-- \(SVIX^2\); and
-- SVIX.
+SVIX is computed from Equation (19) in Martin (2025) by numerically integrating out-of-the-money put and call prices across strikes. Expiration-level values are then interpolated to fixed 1-, 3-, 6-, and 12-month horizons.
 
 ### Forecasting Regressions
 
-We will merge daily SVIX forecasts with subsequent CRSP total returns and horizon-matched risk-free returns.
+Future S&P 500 total returns are constructed from CRSP and converted to excess returns using horizon-matched risk-free returns.
 
-Table 1 will be replicated using the paper's regression specification and Newey–West standard errors. The paper reports 21, 65, 130, and 260 lags at the 1-, 3-, 6-, and 12-month horizons, respectively.
+Table 1 uses Newey–West standard errors with:
+
+| Horizon | Newey–West lags |
+|---|---:|
+| 1 month | 21 |
+| 3 months | 65 |
+| 6 months | 130 |
+| 12 months | 260 |
 
 ### Power-Utility Equity Premia
 
-Figures 1 and 2 will be replicated using the paper's risk-neutral moment formulas for investors with risk aversion \(\gamma = 1, 2, 3\).
+Figures 1 and 2 are replicated for risk aversion values \(\gamma = 1, 2, 3\), with separate replication-sample and updated figures.
 
-The 1-month series will be annualized consistently with the paper, while the 1-year series will be reported at its stated horizon.
+## Empirical Extensions
 
-## Project Roadmap
+The project includes:
 
-### Phase 1 — Project Setup
-
-- Scaffold the repository using the required Chartbook Cookiecutter template.
-- Configure Conda, `.env.example`, `settings.py`, PyDoit, tests, and GitHub collaboration.
-- Remove or replace irrelevant template examples as project modules are introduced.
-
-### Phase 2 — Data Collection
-
-- Pull SPX option data from OptionMetrics.
-- Pull the OptionMetrics zero-coupon yield curve.
-- Pull the CRSP S&P 500 total-return series.
-- Cache raw data locally in the configured `_data` directory.
-
-### Phase 3 — Data Cleaning and Tidy Datasets
-
-- Clean and validate OptionMetrics quotes.
-- Clean and validate CRSP returns.
-- Construct maturity and interest-rate matches.
-- Save separate tidy option, yield-curve, return, and merged analysis datasets.
-
-### Phase 4 — SVIX Construction
-
-- Estimate forward prices.
-- Integrate option prices across strikes.
-- Interpolate to fixed horizons.
-- Construct and validate daily SVIX at 1, 3, 6, and 12 months.
-
-### Phase 5 — Required Replication and Update
-
-- Replicate Table 1.
-- Replicate Figures 1 and 2.
-- Compare results with the paper.
-- Extend all required outputs through the latest available data.
-
-### Phase 6 — Extension Analysis
-
-- Estimate rolling forecasting regressions.
-- Compare forecasting performance across horizons.
-- Evaluate forecasting performance across market regimes.
-
-### Phase 7 — Product, Testing, and Documentation
-
-- Automate the pipeline end-to-end with PyDoit.
-- Add motivated unit tests and replication-tolerance tests.
-- Generate all Chartbook tables and figures from code.
-- Produce the Jupyter notebook tour and LaTeX report.
-- Prepare the proposal presentation, final presentation, and oral defense.
-
-## Expected Outputs
-
-### Required Deliverables
-
-- Daily SVIX series at four horizons.
-- Replicated Table 1.
-- Replicated Figures 1 and 2.
-- Updated SVIX series, regressions, and power-utility figures.
-- A single LaTeX report containing the generated tables and figures.
-- A Jupyter notebook that provides a guided tour of the cleaned data and analysis.
-
-### Additional Research Product
-
-A reusable **SVIX forecasting research toolkit** containing:
-
-- automated WRDS data pulls;
-- documented option-cleaning procedures;
-- a tidy date-by-horizon SVIX dataset generated locally;
-- reusable functions for forward-price estimation and SVIX integration;
-- rolling predictive-power analysis;
-- horizon-level forecast comparisons;
-- market-regime analysis;
-- tests and data-quality diagnostics; and
-- a reproducible Chartbook site.
-
-## Team Responsibilities
-
-The assignments below identify the primary lead for each workstream. Both members will review the full pipeline, contribute code through branches and pull requests, and be prepared to explain and modify the complete project during the oral defense.
-
-### Chandler Bird — Data, Returns, Table 1, and Regime Analysis Lead
-
-Chandler will lead:
-
-- WRDS extraction for OptionMetrics, the zero-coupon curve, and CRSP;
-- cleaning and validation of the option, rate, and return datasets;
-- construction and documentation of tidy intermediate datasets;
-- creation of future 1-, 3-, 6-, and 12-month CRSP total and excess returns;
-- merging the SVIX and return datasets;
-- replication of Table 1 and its Newey–West regressions;
-- design and implementation of the market-regime analysis; and
-- regime-specific tables, figures, and interpretation.
-
-### Andrew Heekin — SVIX and Power-Utility Figures Lead
-
-Andrew will lead:
-
-- zero-coupon maturity matching for the SVIX calculation;
-- forward-price construction;
-- implementation of Equation (19);
-- numerical integration across strikes;
-- expiration interpolation to the four fixed horizons;
-- construction and validation of the daily SVIX term structure;
-- implementation of the risk-neutral moment calculations in Equations (48) and (49); and
-- replication of Figures 1 and 2.
-
-### Shared Responsibilities
-
-Both team members will contribute to:
-
-- final option-filtering and interpolation decisions;
-- rolling predictive-power analysis;
-- forecast-horizon comparison;
-- replication-tolerance tests and other unit tests;
-- PyDoit task design and end-to-end automation;
-- code review and debugging;
-- Chartbook development;
-- documentation and the data dictionary;
-- the Jupyter notebook and LaTeX report;
-- proposal and final presentations; and
-- oral-defense preparation.
+- five-year rolling predictive regressions;
+- in-sample and out-of-sample horizon comparisons;
+- ex-ante market-regime analysis;
+- 2008–2009 crisis-window exclusion;
+- leave-one-year-out sensitivity analysis; and
+- forward-price robustness using the OptionMetrics forward.
 
 ## Repository Organization
 
-The repository follows the required Chartbook Cookiecutter structure. Project-specific source files will be added under `src/`, while licensed raw data and reproducible intermediate data will remain outside version control in `_data/`.
-
-Key locations include:
-
 ```text
 assets/          Non-generated images and presentation assets
-data_manual/     Small manually maintained files that may be version controlled
-docs_src/        Chartbook page definitions and project documentation
-reports/         LaTeX report and presentation source files
-src/             Data pulls, cleaning, SVIX construction, analysis, and tests
-web/             SVIX Monitor web app (FastAPI API + React UI) over the caches
-_data/           Raw and intermediate data generated locally; excluded from Git
-_output/         Generated tables, figures, notebooks, and Chartbook outputs
-dodo.py          PyDoit task definitions for the end-to-end pipeline
+data_manual/     Small manually maintained inputs
+docs_src/        Chartbook source and documentation
+reports/         Final LaTeX report source
+src/             Data pulls, cleaning, SVIX construction, analysis, tests, and notebook
+web/             Read-only SVIX Monitor web application
+_data/           Raw and intermediate licensed data generated locally; excluded from Git
+_output/         Generated tables, figures, notebook HTML, LaTeX fragments, and PDF report
+dodo.py          PyDoit task graph for the end-to-end pipeline
 environment.yml  Conda environment specification
-.env.example     Example local configuration without private credentials
+requirements.txt Python package requirements
+.env.example     Example local configuration without credentials
 ```
 
-Raw OptionMetrics and CRSP data must not be committed to the repository.
+## Analysis Code Map
 
-## Pipeline
+| File | Purpose |
+|---|---|
+| `src/pull_optionmetrics.py` | Pull SPX option data from WRDS |
+| `src/pull_zero_curve.py` | Pull the OptionMetrics zero-coupon curve |
+| `src/pull_crsp_sp500.py` | Pull S&P 500 total returns from CRSP |
+| `src/clean_optionmetrics.py` | Clean and validate SPX option quotes |
+| `src/clean_zero_curve.py` | Clean the zero-coupon curve |
+| `src/clean_crsp_sp500.py` | Prepare S&P 500 total returns |
+| `src/option_surface.py` | Build date-expiration option surfaces |
+| `src/forward_prices.py` | Construct forward prices and diagnostics |
+| `src/svix.py` | Compute expiration-level and fixed-horizon SVIX |
+| `src/build_future_returns.py` | Construct future realized market and excess returns |
+| `src/table1.py` | Estimate Martin Table 1 regressions |
+| `src/power_utility.py` | Replicate and update Figures 1 and 2 |
+| `src/rolling_predictive_power.py` | Estimate rolling forecasting regressions |
+| `src/horizon_comparison.py` | Compare forecasting performance across horizons |
+| `src/regime_analysis.py` | Estimate market-regime regressions |
+| `src/crisis_window_analysis.py` | Run crisis-window and leave-one-year-out tests |
+| `src/forward_robustness.py` | Test sensitivity to forward-price convention |
+| `src/svix_summary_stats.py` | Generate SVIX summary statistics |
+| `src/plot_svix_series.py` | Generate report-ready SVIX figures |
+| `src/build_latex_tables.py` | Generate LaTeX table fragments from pipeline CSVs |
+| `src/01_martin_replication.ipynb.py` | Jupytext source for the guided-tour notebook |
+| `src/01_martin_replication.ipynb` | Executed Jupyter notebook deliverable |
+| `reports/martin_replication_report.tex` | Final LaTeX report source |
+| `dodo.py` | End-to-end PyDoit automation |
 
-The intended end-to-end workflow is:
+## Jupyter Notebook
 
-1. Download the required WRDS data.
-2. Clean and validate OptionMetrics, yield-curve, and CRSP data.
-3. Construct forward prices and maturity-matched risk-free returns.
-4. Compute SVIX at the four target horizons.
-5. Construct future realized market and excess returns.
-6. Replicate Table 1.
-7. Replicate Figures 1 and 2.
-8. Extend the required results through the latest available data.
-9. Run the planned robustness extensions.
-10. Generate Chartbook pages, tables, figures, notebooks, and the LaTeX report.
+The repository includes a guided-tour notebook:
 
-## SVIX Monitor (Web App)
+```text
+src/01_martin_replication.ipynb
+```
 
-`web/` holds an optional local dashboard that reads the pipeline outputs and
-presents the latest option-implied equity premium, its regime against the
-historical distribution, the full history, and the Table 1 regressions. It
-computes nothing new and never contacts WRDS, so it cannot diverge from the
-replication.
+It walks through:
 
-Run the pipeline through `table1`, then start the two processes:
+- data coverage;
+- cleaning and surface diagnostics;
+- fixed-horizon SVIX;
+- summary statistics;
+- Table 1 replication;
+- updated results;
+- power-utility figures;
+- horizon comparison;
+- rolling analysis;
+- regime analysis;
+- crisis robustness; and
+- forward-price robustness.
+
+The notebook is generated from the paired Jupytext source:
+
+```text
+src/01_martin_replication.ipynb.py
+```
+
+and is rebuilt automatically by PyDoit.
+
+## Final LaTeX Report
+
+The final report source is:
+
+```text
+reports/martin_replication_report.tex
+```
+
+The report contains the replication, updated results, summary statistics, project extensions, robustness analysis, discussion of data sources, implementation challenges, and conclusions.
+
+Numerical tables are not typed manually into the report. `src/build_latex_tables.py` reads the CSV outputs generated by the research pipeline and writes the LaTeX table fragments used by the final report.
+
+The compiled report is generated at:
+
+```text
+_output/martin_replication_report.pdf
+```
+
+## SVIX Monitor
+
+The `web/` directory contains an optional read-only SVIX Monitor built on the same pipeline outputs.
+
+It displays:
+
+- the latest available option-implied equity premium;
+- the current SVIX level and historical percentile;
+- current market regime;
+- historical SVIX;
+- selected market events; and
+- Table 1 regression results.
+
+The monitor does not estimate a separate model and does not contact WRDS. It reads the same generated pipeline artifacts used by the research project.
+
+The current local research extract extends through August 29, 2025. The monitor should therefore be viewed as a research interface to the latest available dataset rather than as a real-time market-data application.
+
+To run it:
 
 ```bash
 pip install -r web/backend/requirements.txt
 PYTHONPATH=web/backend uvicorn app.main:app --reload --port 8000
-
-# in a second terminal
-cd web/frontend && npm install && npm run dev
 ```
 
-See [`web/README.md`](web/README.md) for the endpoint list, the data
-requirements, and the annualization convention.
+In another terminal:
+
+```bash
+cd web/frontend
+npm install
+npm run dev
+```
+
+See [`web/README.md`](web/README.md) for more detail.
 
 ## Quick Start
 
 ### Prerequisites
 
-You must have:
+You will need:
 
-- Conda or Mamba;
-- a LaTeX distribution such as MacTeX or TeX Live;
 - Git;
-- Python dependencies specified by the project environment; and
-- authorized WRDS access to OptionMetrics IvyDB US and CRSP.
+- Conda or Mamba;
+- authorized WRDS access to OptionMetrics IvyDB US and CRSP;
+- the Python dependencies defined by `environment.yml` / `requirements.txt`; and
+- a LaTeX installation such as MacTeX or TeX Live with `latexmk` or `pdflatex`.
+
+A fresh end-to-end run requires WRDS access because licensed raw data are not distributed with the repository.
 
 ### Create and Activate the Environment
 
@@ -395,9 +281,11 @@ Copy the example configuration:
 cp .env.example .env
 ```
 
-Add only local paths and private credentials to `.env`. Never commit `.env` or WRDS credentials.
+Add only local configuration and credentials to `.env`.
 
-On macOS or Linux, environment variables may be exported with:
+Never commit `.env` or WRDS credentials.
+
+On macOS or Linux:
 
 ```bash
 set -a
@@ -405,60 +293,76 @@ source .env
 set +a
 ```
 
-### Run the Pipeline
+### Run the Full Pipeline
 
-Run PyDoit from the project root, where `dodo.py` is located:
+From the repository root:
 
 ```bash
 doit
 ```
 
-List available tasks with:
+The default PyDoit pipeline:
+
+1. creates configured directories;
+2. pulls OptionMetrics and CRSP data;
+3. cleans the licensed data;
+4. constructs forward prices;
+5. computes SVIX;
+6. constructs future S&P 500 returns;
+7. reproduces and updates Table 1;
+8. validates replication tolerances;
+9. reproduces and updates the power-utility figures;
+10. runs rolling, horizon, regime, crisis, and forward robustness analyses;
+11. generates SVIX summary statistics and figures;
+12. builds and executes the Jupyter notebook;
+13. generates LaTeX tables;
+14. compiles the final PDF report; and
+15. runs the unit and replication tests.
+
+List all tasks with:
 
 ```bash
-doit list
+doit list --all
 ```
 
-### Run Tests
+Individual stages can also be run directly, for example:
 
 ```bash
-pytest --doctest-modules
+doit table1
+doit run_notebooks
+doit latex_tables
+doit latex_report
+doit run_pytest
 ```
 
-### Format and Lint Python Code
+## Tests
+
+Run the test suite directly with:
 
 ```bash
-ruff format .
-ruff check --select I --fix .
-ruff check . --fix
+python -m pytest -q tests
 ```
+
+The final validated project contains 17 passing tests.
 
 ## Data and Output Storage
 
-- `_data/` contains raw and intermediate data that can be recreated by running the pipeline. It is excluded from Git.
-- `_output/` contains generated tables, figures, notebooks, and site artifacts.
-- `data_manual/` is reserved for small manually maintained inputs that cannot be automatically pulled.
-- `.env` contains local paths and secrets and must never be tracked.
-- `.env.example` documents the required configuration without containing credentials.
+- `_data/` contains licensed raw and intermediate data generated locally and is excluded from Git.
+- `_output/` contains generated tables, figures, notebook HTML, LaTeX fragments, and the compiled report.
+- `.env` contains local configuration and credentials and must never be committed.
+- `.env.example` documents the expected configuration without credentials.
 
-## Naming Conventions
+## Reproducibility
 
-- Files and functions that retrieve external data use the `pull_` prefix.
-- Functions that read locally cached data use the `load_` prefix.
-- Cleaning logic is kept separate from analysis logic.
-- Generated tables and figures are produced from code rather than edited manually.
-- Each Python file includes a module docstring.
-- Public functions use descriptive names and include docstrings where appropriate.
+The repository is designed so that a WRDS-authorized user can recreate the analysis from source code.
 
-## Reproducibility and Git Practices
+Key reproducibility practices include:
 
-- Both group members will make substantive commits.
-- Both group members will create and merge at least one pull request.
-- Raw licensed data, private paths, and credentials will not be committed.
-- All final tables and figures will be reproducible through PyDoit.
-- Important calculations will be covered by motivated unit tests.
-- Changes to methodology will be documented in the README, code comments, and project report.
-
-## Project Status
-
-This README reflects the proposal-stage project plan. Specific filtering rules, interpolation methods, rolling-window lengths, regime definitions, and extension priorities may be revised after the instructor consultation and documented in subsequent commits.
+- licensed raw data are excluded from Git;
+- cleaning and analysis logic are separated;
+- generated research outputs are produced from code rather than edited manually;
+- numerical LaTeX tables are generated from pipeline CSV outputs;
+- the guided-tour notebook is generated and executed automatically;
+- the final PDF report is compiled automatically;
+- the project is orchestrated end-to-end with PyDoit; and
+- important calculations are covered by unit and replication-tolerance tests.

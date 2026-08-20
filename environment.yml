@@ -1,9 +1,12 @@
 name: p06_martin_2025
+
 channels:
   - conda-forge
   - defaults
+
 dependencies:
-  - python>=3.12
+  - python=3.12
+
   # Core dependencies
   - colorama
   - doit==0.36.0
@@ -40,14 +43,12 @@ dependencies:
   - jupyterlab
   - jupytext
   - notebook
-
+  - nbconvert
 
   # Bloomberg data access
   - xbbg==0.7.7
 
-
   - jaydebeapi
-
 
   # R dependencies
   - r-base
@@ -60,9 +61,5 @@ dependencies:
 
   - pip
   - pip:
-
       - chartbook[all]
-
-
       - wrds==3.*
-
